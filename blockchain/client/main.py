@@ -1,13 +1,15 @@
 import uvicorn
 
-from fastapi import FastAPI, Body, Depends, HTTPException
+from fastapi import FastAPI, Body, Depends, HTTPException,  File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from config import *
 from pydantic import BaseModel
+import json
 
 # import data
 from hotaSolana.hotaSolanaDataBase import *
 from hotaSolana.hotaSolanaData import *
+from hotaSolana.bs58 import bs58
 
 app = FastAPI(title="Solana API",
               description="Solana API Management",
@@ -62,6 +64,17 @@ GlobalStaus = {
 }
 
 # Router
+@app.post("/convert-keypair-to-private-key")
+async def convert_keypair_to_private_key(file: UploadFile):
+    # Bytes to string
+    result = file.file.read()
+    keypair_json = json.loads(result)
+    keypair_bytes = bytes(keypair_json)
+    return {
+        "public_key": bs58.encode(keypair_bytes[32:]),
+        "private_key": bs58.encode(keypair_bytes),
+    }
+
 @app.post("/login-as-voter")
 async def login_as_voter(secretKey: str):
     GlobalStaus["type_account"] = "voter"
